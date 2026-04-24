@@ -1,72 +1,73 @@
 name: Security Scans
 
 on:
-    push:
-        branches:
-            - master
-            - main
-    pull_request:
-        branches:
-            - master
-            - main
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
 
 jobs:
-    security:
-        runs-on: ubuntu-latest
-        name: Dependency and SAST checks
+  security:
+    runs-on: ubuntu-latest
+    name: Dependency and SAST checks
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-            - name: Set up Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.14"
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
 
-            - name: Install uv
-              run: pip install uv
+      - name: Install uv
+        run: pip install uv
 
-            - name: Install dependencies
-              run: uv sync --extra dev
+      - name: Install dependencies
+        run: uv sync --extra dev
 
-            - name: Dependency vulnerability scan (uv-secure)
-              run: uvx uv-secure uv.lock
+      - name: Dependency vulnerability scan (uv-secure)
+        run: uvx uv-secure uv.lock
 
-            - name: Set up Trivy
-              uses: aquasecurity/setup-trivy@v0.2.6
-              with:
-                  trivy-version: v0.56.1
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.2.6
+        with:
+          trivy-version: v0.56.1
 
-            - name: Filesystem vulnerability scan (Trivy)
-              id: trivy_scan
-              continue-on-error: true
-              run: |
-                  echo "Running Trivy filesystem scan..."
-                  trivy fs \
-                    --scanners vuln \
-                    --vuln-type os,library \
-                    --severity HIGH,CRITICAL \
-                    --ignore-unfixed \
-                    --format table \
-                    --no-progress \
-                    --exit-code 1 \
-                    --output trivy-report.txt \
-                    .
+      - name: Filesystem vulnerability scan (Trivy)
+        id: trivy_scan
+        continue-on-error: true
+        run: |
+          echo "Running Trivy filesystem scan..."
+          trivy fs \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --format table \
+            --no-progress \
+            --exit-code 1 \
+            --output trivy-report.txt \
+            .
 
-            - name: Upload Trivy report
-              if: always()
-              uses: actions/upload-artifact@v7
-              with:
-                  name: trivy-report-security
-                  path: trivy-report.txt
-                  if-no-files-found: warn
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-report-security
+          path: trivy-report.txt
+          if-no-files-found: warn
 
-            - name: Fail on Trivy findings
-              if: steps.trivy_scan.outcome == 'failure'
-              run: |
-                  echo "Trivy found HIGH/CRITICAL vulnerabilities."
-                  exit 1
+      - name: Fail on Trivy findings
+        if: steps.trivy_scan.outcome == 'failure'
+        run: |
+          echo "Trivy found HIGH/CRITICAL vulnerabilities."
+          exit 1
 
-            - name: Static security scan (bandit)
-              run: uv run bandit -r src/employee_dialogue
+      - name: Static security scan (bandit)
+        run: uv run bandit -r src/employee_dialogue
