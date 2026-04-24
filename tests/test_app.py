@@ -485,11 +485,12 @@ class TestFormValidation:
             entry_id = entry.id
 
         too_long_comment = "x" * (COMMENT_MAX_LENGTH + 1)
+        draft_objective_comment = "Draft objective comment should survive"
         response = authenticated_session.post(
             f"/entries/{entry_id}/edit",
             data={
                 "objective_rating": "Achieved objective",
-                "objective_comment": "Test",
+            "objective_comment": draft_objective_comment,
                 "technical_rating": "Meets expectations",
                 "project_rating": "Meets expectations",
                 "methodology_rating": "Meets expectations",
@@ -510,6 +511,8 @@ class TestFormValidation:
 
         assert response.status_code == 200
         assert b"Comment fields must be 1000 characters or fewer" in response.data
+        assert draft_objective_comment.encode() in response.data
+        assert ("x" * 64).encode() in response.data
 
         with app.app_context():
             persisted_entry = database.session.get(Entry, entry_id)
@@ -777,13 +780,17 @@ class TestSubmissionEmail:
             }
 
         too_long_comment = "x" * (COMMENT_MAX_LENGTH + 1)
+        draft_objective_comment = "Updated manager objective draft"
+        draft_abilities_comment = "Updated manager abilities draft"
+        draft_efficiency_comment = "Updated manager efficiency draft"
+        draft_goals = "Updated goals draft"
         response = client.post(
             f"/entries/{entry_id}/edit_manager",
             data={
-                "manager_objective_comment": "Updated manager objective",
-                "manager_abilities_comment": "Updated manager abilities",
-                "manager_efficiency_comment": "Updated manager efficiency",
-                "goals_2026": "Updated goals",
+                "manager_objective_comment": draft_objective_comment,
+                "manager_abilities_comment": draft_abilities_comment,
+                "manager_efficiency_comment": draft_efficiency_comment,
+                "goals_2026": draft_goals,
                 "manager_general_comments": too_long_comment,
             },
             follow_redirects=True,
@@ -791,6 +798,11 @@ class TestSubmissionEmail:
 
         assert response.status_code == 200
         assert b"Comment fields must be 1000 characters or fewer" in response.data
+        assert draft_objective_comment.encode() in response.data
+        assert draft_abilities_comment.encode() in response.data
+        assert draft_efficiency_comment.encode() in response.data
+        assert draft_goals.encode() in response.data
+        assert ("x" * 64).encode() in response.data
 
         with app.app_context():
             unchanged_entry = database.session.get(Entry, entry_id)

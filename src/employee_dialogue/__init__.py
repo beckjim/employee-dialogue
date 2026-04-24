@@ -726,11 +726,16 @@ def new_entry() -> str | Response:
         return redirect(url_for("edit_entry", entry_id=existing_entry.id))
 
     app.logger.info("Rendering new entry form for user=%s", name or "unknown")
+    draft_form_data = session.pop("create_entry_form_data", {})
+    if not isinstance(draft_form_data, dict):
+        draft_form_data = {}
 
     return render_template(
         "create.html",
         objective_choices=OBJECTIVE_CHOICES,
         ability_choices=ABILITY_CHOICES,
+        comment_max_length=COMMENT_MAX_LENGTH,
+        form_data=draft_form_data,
     )
 
 
@@ -781,6 +786,12 @@ def _normalize_newlines(value: str) -> str:
     """Normalize CRLF/CR line endings to LF."""
 
     return value.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _normalize_textarea_input(value: str) -> str:
+    """Normalize textarea values before validation and persistence."""
+
+    return _normalize_newlines(value).strip()
 
 
 def _email_multiline_field(label: str, value: str) -> list[str]:
@@ -930,20 +941,20 @@ def create_entry() -> Response:
     email = session_user.get("email", "")
     manager_name = session_user.get("manager_name", "").strip()
     objective_rating = request.form.get("objective_rating", "").strip()
-    objective_comment = request.form.get("objective_comment", "").strip()
+    objective_comment = _normalize_textarea_input(request.form.get("objective_comment", ""))
     technical_rating = request.form.get("technical_rating", "").strip()
     project_rating = request.form.get("project_rating", "").strip()
     methodology_rating = request.form.get("methodology_rating", "").strip()
-    abilities_comment = request.form.get("abilities_comment", "").strip()
+    abilities_comment = _normalize_textarea_input(request.form.get("abilities_comment", ""))
     efficiency_collaboration = request.form.get("efficiency_collaboration", "").strip()
     efficiency_ownership = request.form.get("efficiency_ownership", "").strip()
     efficiency_resourcefulness = request.form.get("efficiency_resourcefulness", "").strip()
-    efficiency_comment = request.form.get("efficiency_comment", "").strip()
+    efficiency_comment = _normalize_textarea_input(request.form.get("efficiency_comment", ""))
     conduct_mutual_trust = request.form.get("conduct_mutual_trust", "").strip()
     conduct_proactivity = request.form.get("conduct_proactivity", "").strip()
     conduct_leadership = request.form.get("conduct_leadership", "").strip()
-    conduct_comment = request.form.get("conduct_comment", "").strip()
-    general_comments = request.form.get("general_comments", "").strip()
+    conduct_comment = _normalize_textarea_input(request.form.get("conduct_comment", ""))
+    general_comments = _normalize_textarea_input(request.form.get("general_comments", ""))
     feedback_received = request.form.get("feedback_received", "").strip()
 
     base_missing = not name or not email
@@ -987,13 +998,14 @@ def create_entry() -> Response:
         or objective_invalid
         or abilities_invalid
     ):
+        session["create_entry_form_data"] = request.form.to_dict(flat=True)
         app.logger.warning(
             "Create entry validation failed for user=%s email=%s",
             name or "unknown",
             email or "",
         )
         flash("All fields must be completed with valid options", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("new_entry"))
 
     too_long_comment_fields = _find_too_long_text_fields(
         {
@@ -1005,6 +1017,7 @@ def create_entry() -> Response:
         }
     )
     if too_long_comment_fields:
+        session["create_entry_form_data"] = request.form.to_dict(flat=True)
         app.logger.warning(
             "Create entry comment length validation failed for user=%s fields=%s",
             name or "unknown",
@@ -1014,7 +1027,7 @@ def create_entry() -> Response:
             f"Comment fields must be {COMMENT_MAX_LENGTH} characters or fewer: {', '.join(too_long_comment_fields)}",
             "error",
         )
-        return redirect(url_for("index"))
+        return redirect(url_for("new_entry"))
 
     existing_entry = (
         Entry.query.filter(func.lower(Entry.name) == name.lower()).first() if name else None
@@ -1054,6 +1067,7 @@ def create_entry() -> Response:
     )
     database.session.add(entry)
     database.session.commit()
+    session.pop("create_entry_form_data", None)
     app.logger.info(
         "Entry created entry_id=%s owner=%s manager=%s status=%s",
         entry.id,
@@ -1106,20 +1120,20 @@ def edit_entry(entry_id: int) -> str | Response:
         email = entry.email
         manager_name = session_user.get("manager_name") or entry.manager_name
         objective_rating = request.form.get("objective_rating", "").strip()
-        objective_comment = request.form.get("objective_comment", "").strip()
+        objective_comment = _normalize_textarea_input(request.form.get("objective_comment", ""))
         technical_rating = request.form.get("technical_rating", "").strip()
         project_rating = request.form.get("project_rating", "").strip()
         methodology_rating = request.form.get("methodology_rating", "").strip()
-        abilities_comment = request.form.get("abilities_comment", "").strip()
+        abilities_comment = _normalize_textarea_input(request.form.get("abilities_comment", ""))
         efficiency_collaboration = request.form.get("efficiency_collaboration", "").strip()
         efficiency_ownership = request.form.get("efficiency_ownership", "").strip()
         efficiency_resourcefulness = request.form.get("efficiency_resourcefulness", "").strip()
-        efficiency_comment = request.form.get("efficiency_comment", "").strip()
+        efficiency_comment = _normalize_textarea_input(request.form.get("efficiency_comment", ""))
         conduct_mutual_trust = request.form.get("conduct_mutual_trust", "").strip()
         conduct_proactivity = request.form.get("conduct_proactivity", "").strip()
         conduct_leadership = request.form.get("conduct_leadership", "").strip()
-        conduct_comment = request.form.get("conduct_comment", "").strip()
-        general_comments = request.form.get("general_comments", "").strip()
+        conduct_comment = _normalize_textarea_input(request.form.get("conduct_comment", ""))
+        general_comments = _normalize_textarea_input(request.form.get("general_comments", ""))
         feedback_received = request.form.get("feedback_received", "").strip()
 
         objective_missing = not objective_rating or not objective_comment
@@ -1156,6 +1170,7 @@ def edit_entry(entry_id: int) -> str | Response:
         )
 
         if objective_missing or abilities_missing or objective_invalid or abilities_invalid:
+            session[f"edit_entry_form_data_{entry_id}"] = request.form.to_dict(flat=True)
             app.logger.warning(
                 "Edit entry validation failed entry_id=%s requester=%s",
                 entry.id,
@@ -1174,6 +1189,7 @@ def edit_entry(entry_id: int) -> str | Response:
             }
         )
         if too_long_comment_fields:
+            session[f"edit_entry_form_data_{entry_id}"] = request.form.to_dict(flat=True)
             app.logger.warning(
                 "Edit entry comment length validation failed entry_id=%s requester=%s fields=%s",
                 entry.id,
@@ -1206,6 +1222,7 @@ def edit_entry(entry_id: int) -> str | Response:
         entry.general_comments = general_comments
         entry.feedback_received = feedback_received
         database.session.commit()
+        session.pop(f"edit_entry_form_data_{entry_id}", None)
         app.logger.info(
             "Entry updated entry_id=%s owner=%s updated_by=%s status=%s",
             entry.id,
@@ -1216,11 +1233,17 @@ def edit_entry(entry_id: int) -> str | Response:
         flash("Entry updated", "success")
         return redirect(url_for("index"))
 
+    draft_form_data = session.pop(f"edit_entry_form_data_{entry_id}", {})
+    if not isinstance(draft_form_data, dict):
+        draft_form_data = {}
+
     return render_template(
         "edit.html",
         entry=entry,
         objective_choices=OBJECTIVE_CHOICES,
         ability_choices=ABILITY_CHOICES,
+        comment_max_length=COMMENT_MAX_LENGTH,
+        form_data=draft_form_data,
     )
 
 
@@ -1349,11 +1372,19 @@ def edit_manager_entry(entry_id: int) -> str | Response:
 
     if request.method == "POST":
         # Editable manager fields
-        manager_objective_comment = request.form.get("manager_objective_comment", "").strip()
-        manager_abilities_comment = request.form.get("manager_abilities_comment", "").strip()
-        manager_efficiency_comment = request.form.get("manager_efficiency_comment", "").strip()
-        goals_2026 = request.form.get("goals_2026", "").strip()
-        manager_general_comments = request.form.get("manager_general_comments", "").strip()
+        manager_objective_comment = _normalize_textarea_input(
+            request.form.get("manager_objective_comment", "")
+        )
+        manager_abilities_comment = _normalize_textarea_input(
+            request.form.get("manager_abilities_comment", "")
+        )
+        manager_efficiency_comment = _normalize_textarea_input(
+            request.form.get("manager_efficiency_comment", "")
+        )
+        goals_2026 = _normalize_textarea_input(request.form.get("goals_2026", ""))
+        manager_general_comments = _normalize_textarea_input(
+            request.form.get("manager_general_comments", "")
+        )
 
         # Validate only the editable manager fields
         manager_fields_missing = (
@@ -1365,6 +1396,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
         )
 
         if manager_fields_missing:
+            session[f"edit_manager_entry_form_data_{entry_id}"] = request.form.to_dict(flat=True)
             app.logger.warning(
                 "Manager edit validation failed entry_id=%s requester=%s",
                 entry.id,
@@ -1383,6 +1415,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
             }
         )
         if too_long_comment_fields:
+            session[f"edit_manager_entry_form_data_{entry_id}"] = request.form.to_dict(flat=True)
             app.logger.warning(
                 "Manager edit comment length validation failed entry_id=%s requester=%s fields=%s",
                 entry.id,
@@ -1404,6 +1437,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
         entry.workflow_status = STATUS_FINALIZED
         entry.program_manager_name = session_user.get("program_manager_name") or ""
         database.session.commit()
+        session.pop(f"edit_manager_entry_form_data_{entry_id}", None)
         app.logger.info(
             "Manager assessment saved entry_id=%s owner=%s manager=%s status=%s->%s program_manager=%s",
             entry.id,
@@ -1428,11 +1462,17 @@ def edit_manager_entry(entry_id: int) -> str | Response:
         flash("Final assessment saved and summary email sent.", "success")
         return redirect(url_for("index"))
 
+    draft_form_data = session.pop(f"edit_manager_entry_form_data_{entry_id}", {})
+    if not isinstance(draft_form_data, dict):
+        draft_form_data = {}
+
     return render_template(
         "final_edit.html",
         entry=entry,
         objective_choices=OBJECTIVE_CHOICES,
         ability_choices=ABILITY_CHOICES,
+        comment_max_length=COMMENT_MAX_LENGTH,
+        form_data=draft_form_data,
     )
 
 
