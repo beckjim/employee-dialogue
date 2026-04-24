@@ -18,6 +18,9 @@ dist/
 *.egg-info/
 *.egg
 
+# log files
+*.log
+
 # Tool caches and reports
 .pytest_cache/
 .coverage

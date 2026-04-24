@@ -170,6 +170,18 @@ ALLOW_FINALIZED_SELF_ASSESSMENT_DELETE_FOR_TESTING = (
     in {"1", "true", "yes", "on"}
 )
 
+# Testing override: redirect all outgoing emails to a fixed address instead of real recipients.
+# Set EMAIL_REDIRECT_ADDRESS to a valid email address to enable; leave empty or unset to disable.
+_email_redirect_raw = os.environ.get("EMAIL_REDIRECT_ADDRESS", "").strip()
+if _email_redirect_raw and "@" not in _email_redirect_raw:
+    app.logger.warning(
+        "EMAIL_REDIRECT_ADDRESS '%s' does not look like a valid email address; ignoring.",
+        _email_redirect_raw,
+    )
+    EMAIL_REDIRECT_ADDRESS = ""
+else:
+    EMAIL_REDIRECT_ADDRESS = _email_redirect_raw
+
 
 class Entry(database.Model):
     """Simple submission entry model."""
@@ -852,7 +864,14 @@ def _assessment_email_body(entry: Entry) -> str:
 
 
 def _send_assessment_summary_email(entry: Entry, manager_email: str = "") -> None:
-    """Send assessment summary email to employee and manager using SMTP auth."""
+    """Send assessment summary email to employee and manager using SMTP auth.
+
+    In testing environments, set the EMAIL_REDIRECT_ADDRESS environment variable
+    to a valid email address to intercept all outgoing emails and deliver them to
+    that address instead of the real recipients. Leave the variable empty or unset
+    to send to real recipients normally. An invalid value (no '@') is ignored with
+    a startup warning.
+    """
 
     recipients: list[str] = []
     for address in ((entry.email or "").strip(), (manager_email or "").strip()):
@@ -866,6 +885,15 @@ def _send_assessment_summary_email(entry: Entry, manager_email: str = "") -> Non
         raise ValueError("No valid email recipients are available")
     if not SMTP_USERNAME or not SMTP_PASSWORD:
         raise ValueError("SMTP credentials are not configured")
+
+    if EMAIL_REDIRECT_ADDRESS:
+        app.logger.warning(
+            "EMAIL_REDIRECT_ADDRESS is set; redirecting email for entry_id=%s from %s to %s",
+            entry.id,
+            ", ".join(recipients),
+            EMAIL_REDIRECT_ADDRESS,
+        )
+        recipients = [EMAIL_REDIRECT_ADDRESS]
 
     message = EmailMessage()
     message["From"] = SMTP_USERNAME
