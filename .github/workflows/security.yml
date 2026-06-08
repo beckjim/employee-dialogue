@@ -35,7 +35,7 @@ jobs:
         run: uvx uv-secure uv.lock
 
       - name: Set up Trivy
-        uses: aquasecurity/setup-trivy@v0.2.6
+        uses: aquasecurity/setup-trivy@v0.3.1
         with:
           trivy-version: v0.56.1
 
