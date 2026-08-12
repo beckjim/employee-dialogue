@@ -6,8 +6,8 @@ ARG APP_VERSION=0.1.0
 # Install build dependencies
 RUN apk add --no-cache build-base
 
-# Install uv
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel uv
+# Keep build tooling in builder only
+RUN pip install --no-cache-dir --root-user-action ignore --upgrade pip setuptools wheel
 
 WORKDIR /app
 
@@ -15,8 +15,8 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY src/ ./src/
 
-# Install dependencies into a virtual environment
-RUN uv pip install --system .
+# Install only runtime dependencies into an isolated target directory
+RUN pip install --no-cache-dir --root-user-action ignore --target /opt/appdeps .
 
 # Stage 2: Runtime
 FROM dhi.io/python:3.14-alpine
@@ -28,9 +28,8 @@ LABEL org.opencontainers.image.version="$APP_VERSION"
 # Set working directory
 WORKDIR /app
 
-# Copy Python packages and scripts from builder
-COPY --from=builder /usr/lib/python3.14/site-packages /usr/lib/python3.14/site-packages
-COPY --from=builder /usr/bin /usr/bin
+# Copy only app/runtime dependencies from builder
+COPY --from=builder /opt/appdeps /opt/appdeps
 
 # Ensure the instance directory exists in the image
 WORKDIR /app/instance
@@ -49,6 +48,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV SKIP_DB_INIT=1
 ENV APP_VERSION=$APP_VERSION
+ENV PYTHONPATH=/opt/appdeps
 
 # Run gunicorn directly (runtime image may not include a shell)
-ENTRYPOINT ["gunicorn", "--forwarded-allow-ips=127.0.0.1", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "sync", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "employee_dialogue:app"]
+ENTRYPOINT ["python", "-m", "gunicorn", "--forwarded-allow-ips=127.0.0.1", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "sync", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "employee_dialogue:app"]
