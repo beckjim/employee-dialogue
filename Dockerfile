@@ -1,35 +1,47 @@
-# Use Python 3.14 slim image
-FROM python:3.14-slim
+# Stage 1: Builder
+FROM dhi.io/python:3.14-alpine-dev AS builder
 
-# Set working directory
+# Install build dependencies
+RUN apk add --no-cache build-base
+
+# Install uv
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel uv
+
 WORKDIR /app
-
-# Install uv and openssl
-RUN pip install --no-cache-dir uv && apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
 COPY pyproject.toml ./
 COPY src/ ./src/
-COPY docker-entrypoint.sh /app/entrypoint.sh
 
-# Install dependencies
+# Install dependencies into a virtual environment
 RUN uv pip install --system .
 
-# Create instance directory for SQLite database and certs directory
-RUN mkdir -p instance certs
+# Stage 2: Runtime
+FROM dhi.io/python:3.14-alpine
 
-# Generate self-signed certificate
-RUN openssl req -x509 -newkey rsa:4096 -nodes -out certs/cert.pem -keyout certs/key.pem -days 365 \
-    -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+# Set working directory
+WORKDIR /app
 
-RUN chmod +x /app/entrypoint.sh
+# Copy Python packages and scripts from builder
+COPY --from=builder /usr/lib/python3.14/site-packages /usr/lib/python3.14/site-packages
+COPY --from=builder /usr/bin /usr/bin
 
-# Expose ports 5000 and 443
-EXPOSE 5000 443
+# Ensure the instance directory exists in the image
+WORKDIR /app/instance
+WORKDIR /app
+
+# Run as non-root numeric UID/GID
+USER 1000:1000
+
+# Expose port 5000
+EXPOSE 5000
 
 # Set environment variables
 ENV FLASK_APP=employee_dialogue
+ENV FLASK_INSTANCE_PATH=/app/instance
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV SKIP_DB_INIT=1
 
-# Run both HTTP and HTTPS servers
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Run gunicorn directly (runtime image may not include a shell)
+ENTRYPOINT ["gunicorn", "--forwarded-allow-ips=127.0.0.1", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "sync", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "employee_dialogue:app"]

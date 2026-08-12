@@ -188,18 +188,4 @@
 
   </div>
 </div>
-<script>
-  document.querySelectorAll('[data-toggle-detail]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var targetId = button.getAttribute('data-toggle-detail');
-      var detailRow = targetId ? document.getElementById(targetId) : null;
-      if (!detailRow) {
-        return;
-      }
-      var isOpen = detailRow.style.display !== 'none';
-      detailRow.style.display = isOpen ? 'none' : 'table-row';
-      button.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-    });
-  });
-</script>
 {% endblock %}

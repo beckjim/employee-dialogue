@@ -1,13 +1,40 @@
 services:
-  web:
+  nginx:
+    image: dhi.io/nginx:1.31
+    container_name: nginx
+    user: "0:0"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:rw,noexec,nosuid,size=64m
+      - /var/run:rw,noexec,nosuid,size=16m
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+    pids_limit: 100
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  app:
     build: .
     image: ghcr.io/beckjim/employee-dialogue:latest
-    ports:
-      - "443:443"
-      - "5000:5000"
     volumes:
-      # - app-data:/app/instance
       - ./instance:/app/instance
+    expose:
+      - "5000"
     environment:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
       - AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
@@ -25,6 +52,15 @@ services:
       retries: 3
       start_period: 40s
 
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 200
   emailproxy:
     image: blacktirion/email-oauth2-proxy-docker # ghcr.io optional. this is published on both Docker Hub and Github Container Repository
     container_name: emailproxy
@@ -36,6 +72,14 @@ services:
       LOGFILE: true
       DEBUG: false
       CACHE_STORE: /config/credstore.config
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 100
 
 # volumes:
 #   app-data:

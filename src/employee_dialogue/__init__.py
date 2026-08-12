@@ -10,6 +10,7 @@ from datetime import UTC
 from datetime import datetime
 from email.message import EmailMessage
 from functools import wraps
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 from zoneinfo import ZoneInfoNotFoundError
@@ -31,14 +32,25 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from sqlalchemy import inspect
 from werkzeug.wrappers.response import Response
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
-app = Flask(__name__)
+DEFAULT_INSTANCE_PATH = Path(
+    os.environ.get("FLASK_INSTANCE_PATH", Path.cwd() / "instance")
+).resolve()
+
+app = Flask(__name__, instance_path=str(DEFAULT_INSTANCE_PATH))
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
 
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1,
+    x_host=1,
+)
 
 class _RequestIdLogFilter(logging.Filter):
     """Inject request correlation ids into log messages."""
@@ -1691,4 +1703,5 @@ def logout() -> Response:
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
+
