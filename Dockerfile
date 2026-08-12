@@ -1,6 +1,8 @@
 # Stage 1: Builder
 FROM dhi.io/python:3.14-alpine-dev AS builder
 
+ARG APP_VERSION=0.1.0
+
 # Install build dependencies
 RUN apk add --no-cache build-base
 
@@ -18,6 +20,10 @@ RUN uv pip install --system .
 
 # Stage 2: Runtime
 FROM dhi.io/python:3.14-alpine
+
+ARG APP_VERSION=0.1.0
+LABEL org.opencontainers.image.title="employee-dialogue"
+LABEL org.opencontainers.image.version="$APP_VERSION"
 
 # Set working directory
 WORKDIR /app
@@ -42,6 +48,7 @@ ENV FLASK_INSTANCE_PATH=/app/instance
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV SKIP_DB_INIT=1
+ENV APP_VERSION=$APP_VERSION
 
 # Run gunicorn directly (runtime image may not include a shell)
 ENTRYPOINT ["gunicorn", "--forwarded-allow-ips=127.0.0.1", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "sync", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "employee_dialogue:app"]

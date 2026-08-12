@@ -16,6 +16,7 @@ uv sync
 
 Create a .env file (or edit the provided one):
 ```
+APP_VERSION=0.1.0
 AZURE_AD_CLIENT_SECRET=your_client_secret_here
 SECRET_KEY=change_me_in_prod
 SMTP_HOST=localhost
@@ -34,8 +35,13 @@ App will start on http://127.0.0.1:5000.
 
 ## Run with Docker Compose
 ```bash
-docker compose -f compose.yml up -d --build web
+docker compose -f compose.yml up -d --build
 ```
+
+The app and container image use the same `APP_VERSION` value.
+Compose builds and tags the app image as:
+
+`ghcr.io/beckjim/employee-dialogue:${APP_VERSION}`
 
 Container startup performs a one-time app import to initialize/migrate SQLite schema before Gunicorn workers are spawned.
 After that, `SKIP_DB_INIT=1` is set for worker processes to prevent concurrent schema initialization races.

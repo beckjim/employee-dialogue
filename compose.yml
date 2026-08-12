@@ -22,8 +22,11 @@ services:
     restart: unless-stopped
 
   app:
-    build: .
-    image: ghcr.io/beckjim/employee-dialogue:latest
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0}
+    image: ghcr.io/beckjim/employee-dialogue:${APP_VERSION:-0.1.0}
     volumes:
       - ./instance:/app/instance
     expose:
@@ -37,6 +40,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - ALLOW_FINALIZED_DELETE_TESTING=${ALLOW_FINALIZED_DELETE_TESTING:-false}
       - EMAIL_REDIRECT_ADDRESS=${EMAIL_REDIRECT_ADDRESS}
+      - APP_VERSION=${APP_VERSION:-0.1.0}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/login"]
