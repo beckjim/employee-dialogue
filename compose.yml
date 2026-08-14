@@ -41,6 +41,8 @@ services:
       - ALLOW_FINALIZED_DELETE_TESTING=${ALLOW_FINALIZED_DELETE_TESTING:-false}
       - EMAIL_REDIRECT_ADDRESS=${EMAIL_REDIRECT_ADDRESS}
       - APP_VERSION=${APP_VERSION:-0.1.0}
+      - HOME=/tmp
+      - TMPDIR=/tmp
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/login"]
