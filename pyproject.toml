@@ -11,7 +11,7 @@ dependencies = [
     "gunicorn==25.3.0",
     "msal==1.37.0",
     "python-dotenv==1.2.2",
-    "requests==2.33.1",
+    "requests==2.34.2",
     "tzdata>=2025.3",
 ]
 readme = "README.md"
