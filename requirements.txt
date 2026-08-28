@@ -7,4 +7,4 @@ gunicorn==25.3.0
 msal==1.37.0
 python-dotenv==1.2.2
 requests==2.33.1
-tzdata==2025.3
+tzdata==2026.2
