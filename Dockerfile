@@ -12,11 +12,11 @@ RUN pip install --no-cache-dir --root-user-action ignore --upgrade pip setuptool
 WORKDIR /app
 
 # Copy project files
-COPY pyproject.toml ./
+COPY pyproject.toml requirements.txt ./
 COPY src/ ./src/
 
-# Install only runtime dependencies into an isolated target directory
-RUN pip install --no-cache-dir --root-user-action ignore --target /opt/appdeps .
+# Install the pinned runtime dependencies and app into an isolated target directory
+RUN pip install --no-cache-dir --root-user-action ignore --target /opt/appdeps -r requirements.txt .
 
 # Stage 2: Runtime
 FROM dhi.io/python:3.14-alpine
