@@ -34,8 +34,10 @@
         <div class="summary"><strong>Manager:</strong> {{ entry.manager_name }}</div>
         {% endif %}
         <div class="summary">
-          <div><strong>Objective rating:</strong> {{ entry.objective_rating }}</div>
-          <div><strong>Objective comments:</strong><br><span class="preserve-lines">{{ entry.objective_comment }}</span></div>
+          <div>
+            <div><strong>Objective rating:</strong> {{ entry.objective_rating }}</div>
+            <div><strong>Objective comments:</strong><br><span class="preserve-lines">{{ entry.objective_comment }}</span></div>
+          </div>
           <div><strong>Abilities:</strong>
             <ul>
               <li>Technical/functional skills: {{ entry.technical_rating }}</li>
@@ -144,8 +146,10 @@
               <div class="entry">
                 <small>{{ row.entry.updated_at|german_time }}</small>
                 <div class="summary">
-                  <div><strong>Objective rating:</strong> {{ row.entry.objective_rating }}</div>
-                  <div><strong>Objective comments:</strong><br><span class="preserve-lines">{{ row.entry.objective_comment }}</span></div>
+                  <div>
+                    <div><strong>Objective rating:</strong> {{ row.entry.objective_rating }}</div>
+                    <div><strong>Objective comments:</strong><br><span class="preserve-lines">{{ row.entry.objective_comment }}</span></div>
+                  </div>
                   <div><strong>Abilities:</strong>
                     <ul>
                       <li>Technical/functional skills: {{ row.entry.technical_rating }}</li>

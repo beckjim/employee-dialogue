@@ -197,6 +197,13 @@
                 <textarea id="conduct_comment" name="conduct_comment" maxlength="{{ comment_max_length }}" readonly
                     required>{{ entry.conduct_comment }}</textarea>
             </div>
+            <div>
+                <label class="comment-label" for="manager_conduct_comment">Comments from Manager to self assessment
+                    related to Conduct *</label>
+                <p>Manager's feedback on the employee's conduct assessment.</p>
+                <textarea id="manager_conduct_comment" name="manager_conduct_comment" maxlength="{{ comment_max_length }}"
+                    required>{{ form_data.get('manager_conduct_comment', entry.manager_conduct_comment) }}</textarea>
+            </div>
         </fieldset>
 
         <fieldset>
@@ -231,19 +238,19 @@
         </fieldset>
 
         <fieldset>
-            <legend>Goals/objectives for 2026 *</legend>
-            <p>Employee's goals and objectives for the upcoming year.</p>
-            <div>
-                <textarea id="goals_2026" name="goals_2026" maxlength="{{ comment_max_length }}" required>{{ form_data.get('goals_2026', entry.goals_2026) }}</textarea>
-            </div>
-        </fieldset>
-
-        <fieldset>
             <legend>General Comments from Manager *</legend>
             <p>Manager's overall feedback and comments on the employee's performance assessment.</p>
             <div>
                 <textarea id="manager_general_comments" name="manager_general_comments" maxlength="{{ comment_max_length }}"
                     required>{{ form_data.get('manager_general_comments', entry.manager_general_comments) }}</textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Goals/objectives for 2026 *</legend>
+            <p>Employee's goals and objectives for the upcoming year.</p>
+            <div>
+                <textarea id="goals_2026" name="goals_2026" maxlength="{{ comment_max_length }}" required>{{ form_data.get('goals_2026', entry.goals_2026) }}</textarea>
             </div>
         </fieldset>
 

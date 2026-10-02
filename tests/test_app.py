@@ -780,6 +780,7 @@ class TestSubmissionEmail:
             }
 
         too_long_comment = "x" * (COMMENT_MAX_LENGTH + 1)
+        too_long_conduct_comment = "y" * (COMMENT_MAX_LENGTH + 1)
         draft_objective_comment = "Updated manager objective draft"
         draft_abilities_comment = "Updated manager abilities draft"
         draft_efficiency_comment = "Updated manager efficiency draft"
@@ -790,6 +791,7 @@ class TestSubmissionEmail:
                 "manager_objective_comment": draft_objective_comment,
                 "manager_abilities_comment": draft_abilities_comment,
                 "manager_efficiency_comment": draft_efficiency_comment,
+                "manager_conduct_comment": too_long_conduct_comment,
                 "goals_2026": draft_goals,
                 "manager_general_comments": too_long_comment,
             },
@@ -798,6 +800,7 @@ class TestSubmissionEmail:
 
         assert response.status_code == 200
         assert b"Comment fields must be 1000 characters or fewer" in response.data
+        assert b"Manager conduct comments" in response.data
         assert draft_objective_comment.encode() in response.data
         assert draft_abilities_comment.encode() in response.data
         assert draft_efficiency_comment.encode() in response.data
@@ -831,6 +834,7 @@ class TestSubmissionEmail:
                 "manager_objective_comment": "Updated manager objective",
                 "manager_abilities_comment": "Updated manager abilities",
                 "manager_efficiency_comment": "Updated manager efficiency",
+                "manager_conduct_comment": "Updated manager conduct",
                 "goals_2026": too_long_goals,
                 "manager_general_comments": "Updated manager general",
             },
@@ -870,6 +874,7 @@ class TestSubmissionEmail:
             conduct_proactivity="Meets expectations",
             conduct_leadership="N/A",
             conduct_comment="C1\nC2",
+            manager_conduct_comment="MC1\nMC2",
             general_comments="G1\nG2",
             goals_2026="Goal1\nGoal2",
             manager_general_comments="MG1\nMG2",
@@ -881,6 +886,7 @@ class TestSubmissionEmail:
 
         assert "- Employee Comment:\n  Line one\n  Line two" in body
         assert "- Manager Comment:\n  Mgr one\n  Mgr two" in body
+        assert "- Manager Comment:\n  MC1\n  MC2" in body
         assert "- Employee General Comments:\n  G1\n  G2" in body
         assert "- Goals 2026:\n  Goal1\n  Goal2" in body
 
@@ -907,6 +913,7 @@ class TestSubmissionEmail:
                 conduct_proactivity="Meets expectations",
                 conduct_leadership="N/A",
                 conduct_comment="Conduct comment",
+                manager_conduct_comment="Manager conduct",
                 general_comments="General comments",
                 goals_2026="Goals",
                 manager_general_comments="Manager general",
@@ -964,6 +971,7 @@ class TestSubmissionEmail:
                 "manager_objective_comment": "Updated manager objective",
                 "manager_abilities_comment": "Updated manager abilities",
                 "manager_efficiency_comment": "Updated manager efficiency",
+                "manager_conduct_comment": "Updated manager conduct",
                 "goals_2026": "Updated goals",
                 "manager_general_comments": "Updated manager general",
             },
@@ -974,6 +982,7 @@ class TestSubmissionEmail:
             finalized_entry = database.session.get(Entry, entry_id)
             assert finalized_entry is not None
             assert finalized_entry.workflow_status == STATUS_FINALIZED
+            assert finalized_entry.manager_conduct_comment == "Updated manager conduct"
 
         assert sent["host"] == "localhost"
         assert sent["port"] == 1587
@@ -1025,6 +1034,7 @@ class TestSubmissionEmail:
                 "manager_objective_comment": "Updated manager objective",
                 "manager_abilities_comment": "Updated manager abilities",
                 "manager_efficiency_comment": "Updated manager efficiency",
+                "manager_conduct_comment": "Updated manager conduct",
                 "goals_2026": "Updated goals",
                 "manager_general_comments": "Updated manager general",
             },

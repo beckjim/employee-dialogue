@@ -229,6 +229,7 @@ class Entry(database.Model):
     conduct_proactivity = database.Column(database.String(40), nullable=False, default="")
     conduct_leadership = database.Column(database.String(40), nullable=False, default="")
     conduct_comment = database.Column(database.Text, nullable=False, default="")
+    manager_conduct_comment = database.Column(database.Text, nullable=False, default="")
     general_comments = database.Column(database.Text, nullable=False, default="")
     goals_2026 = database.Column(database.Text, nullable=False, default="")
     manager_general_comments = database.Column(database.Text, nullable=False, default="")
@@ -279,6 +280,7 @@ def _initialize_database() -> None:
                 ("conduct_proactivity", "TEXT", "''"),
                 ("conduct_leadership", "TEXT", "''"),
                 ("conduct_comment", "TEXT", "''"),
+                ("manager_conduct_comment", "TEXT", "''"),
                 ("general_comments", "TEXT", "''"),
                 ("goals_2026", "TEXT", "''"),
                 ("manager_general_comments", "TEXT", "''"),
@@ -879,6 +881,7 @@ def _assessment_email_body(entry: Entry) -> str:
         ]
     )
     lines.extend(_email_multiline_field("Comment", entry.conduct_comment))
+    lines.extend(_email_multiline_field("Manager Comment", entry.manager_conduct_comment or ""))
     lines.extend(
         [
         "",
@@ -1403,6 +1406,9 @@ def edit_manager_entry(entry_id: int) -> str | Response:
         manager_efficiency_comment = _normalize_textarea_input(
             request.form.get("manager_efficiency_comment", "")
         )
+        manager_conduct_comment = _normalize_textarea_input(
+            request.form.get("manager_conduct_comment", "")
+        )
         goals_2026 = _normalize_textarea_input(request.form.get("goals_2026", ""))
         manager_general_comments = _normalize_textarea_input(
             request.form.get("manager_general_comments", "")
@@ -1413,6 +1419,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
             not manager_objective_comment
             or not manager_abilities_comment
             or not manager_efficiency_comment
+            or not manager_conduct_comment
             or not goals_2026
             or not manager_general_comments
         )
@@ -1432,6 +1439,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
                 "Manager objective comments": manager_objective_comment,
                 "Manager abilities comments": manager_abilities_comment,
                 "Manager efficiency comments": manager_efficiency_comment,
+                "Manager conduct comments": manager_conduct_comment,
                 "Goals 2026": goals_2026,
                 "Manager general comments": manager_general_comments,
             }
@@ -1454,6 +1462,7 @@ def edit_manager_entry(entry_id: int) -> str | Response:
         entry.manager_objective_comment = manager_objective_comment
         entry.manager_abilities_comment = manager_abilities_comment
         entry.manager_efficiency_comment = manager_efficiency_comment
+        entry.manager_conduct_comment = manager_conduct_comment
         entry.goals_2026 = goals_2026
         entry.manager_general_comments = manager_general_comments
         entry.workflow_status = STATUS_FINALIZED
