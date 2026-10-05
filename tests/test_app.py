@@ -210,6 +210,108 @@ class TestRoutes:
         assert response.status_code == 200
         assert b"Your Self Assessment" in response.data
 
+    def test_manager_and_program_manager_views_include_complete_assessment(self, client):
+        """Test manager and program manager views show the full assessment hierarchy."""
+        with app.app_context():
+            entry = Entry(
+                name="Employee Detail",
+                email="employee-detail@example.com",
+                manager_name="Manager Detail",
+                objective_rating="Achieved objective",
+                objective_comment="SELF_OBJECTIVE",
+                manager_objective_comment="MANAGER_OBJECTIVE",
+                technical_rating="Meets expectations",
+                project_rating="Above expectations",
+                methodology_rating="N/A",
+                abilities_comment="SELF_ABILITIES",
+                manager_abilities_comment="MANAGER_ABILITIES",
+                efficiency_collaboration="Meets expectations",
+                efficiency_ownership="Above expectations",
+                efficiency_resourcefulness="N/A",
+                efficiency_comment="SELF_EFFICIENCY",
+                manager_efficiency_comment="MANAGER_EFFICIENCY",
+                conduct_mutual_trust="Meets expectations",
+                conduct_proactivity="Above expectations",
+                conduct_leadership="N/A",
+                conduct_comment="SELF_CONDUCT",
+                manager_conduct_comment="MANAGER_CONDUCT",
+                general_comments="SELF_GENERAL",
+                manager_general_comments="MANAGER_GENERAL",
+                goals_2026="MANAGER_GOALS",
+                feedback_received="Yes",
+                program_manager_name="Program Manager Detail",
+                workflow_status=STATUS_FINALIZED,
+            )
+            database.session.add(entry)
+            database.session.commit()
+            entry_id = entry.id
+
+        with client.session_transaction() as sess:
+            sess["user"] = {
+                "name": "Manager Detail",
+                "email": "manager-detail@example.com",
+                "manager_name": "Program Manager Detail",
+                "program_manager_name": "Program Manager Detail",
+            }
+
+        manager_response = client.get(f"/entries/{entry_id}/edit_manager")
+        assert manager_response.status_code == 200
+        manager_page = manager_response.get_data(as_text=True)
+        for value in (
+            "Employee Detail",
+            "employee-detail@example.com",
+            "Manager Detail",
+            "Program Manager Detail",
+            "SELF_OBJECTIVE",
+            "SELF_ABILITIES",
+            "SELF_EFFICIENCY",
+            "SELF_CONDUCT",
+            "SELF_GENERAL",
+            "MANAGER_OBJECTIVE",
+            "MANAGER_ABILITIES",
+            "MANAGER_EFFICIENCY",
+            "MANAGER_CONDUCT",
+            "MANAGER_GENERAL",
+            "MANAGER_GOALS",
+        ):
+            assert value in manager_page
+
+        with app.app_context():
+            entry = database.session.get(Entry, entry_id)
+            assert entry is not None
+            entry.workflow_status = STATUS_SUBMITTED
+            database.session.commit()
+
+        with client.session_transaction() as sess:
+            sess["user"] = {
+                "name": "Program Manager Detail",
+                "email": "program-manager-detail@example.com",
+                "manager_name": "Senior Manager",
+                "program_manager_name": "Program Manager Detail",
+            }
+
+        program_manager_response = client.get("/")
+        assert program_manager_response.status_code == 200
+        program_manager_page = program_manager_response.get_data(as_text=True)
+        for value in (
+            "Employee Detail",
+            "employee-detail@example.com",
+            "Manager Detail",
+            "Program Manager Detail",
+            "SELF_OBJECTIVE",
+            "SELF_ABILITIES",
+            "SELF_EFFICIENCY",
+            "SELF_CONDUCT",
+            "SELF_GENERAL",
+            "MANAGER_OBJECTIVE",
+            "MANAGER_ABILITIES",
+            "MANAGER_EFFICIENCY",
+            "MANAGER_CONDUCT",
+            "MANAGER_GENERAL",
+            "MANAGER_GOALS",
+        ):
+            assert value in program_manager_page
+
     def test_new_entry_redirect_without_auth(self, client):
         """Test new entry redirects to login when not authenticated."""
         response = client.get("/entries/new")
@@ -884,11 +986,29 @@ class TestSubmissionEmail:
 
         body = app_module._assessment_email_body(entry)
 
+        assert "Employee User" in body
+        assert "employee@example.com" in body
+        assert "Manager User" in body
+        assert "- Program Manager: N/A" in body
+        assert "- Rating: Achieved objective" in body
         assert "- Employee Comment:\n  Line one\n  Line two" in body
         assert "- Manager Comment:\n  Mgr one\n  Mgr two" in body
+        assert "- Technical: Meets expectations" in body
+        assert "- Project: Meets expectations" in body
+        assert "- Methodology: Meets expectations" in body
+        assert "- Employee Comment:\n  A1\n  A2" in body
+        assert "- Manager Comment:\n  MA1" in body
+        assert "- Employee Comment:\n  E1\n  E2" in body
+        assert "- Manager Comment:\n  ME1" in body
+        assert "- Mutual trust: Meets expectations" in body
+        assert "- Proactivity: Meets expectations" in body
+        assert "- Leadership: N/A" in body
+        assert "- Comment:\n  C1\n  C2" in body
         assert "- Manager Comment:\n  MC1\n  MC2" in body
         assert "- Employee General Comments:\n  G1\n  G2" in body
+        assert "- Manager General Comments:\n  MG1\n  MG2" in body
         assert "- Goals 2026:\n  Goal1\n  Goal2" in body
+        assert "- Feedback Received: Yes" in body
 
     def _create_created_entry(self) -> int:
         with app.app_context():

@@ -16,6 +16,9 @@
             <label for="manager_name">Manager</label>
             <input id="manager_name" name="manager_name" value="{{ entry.manager_name }}" readonly>
         </div>
+        <div>
+            <strong>Program Manager:</strong> {{ entry.program_manager_name or 'Not assigned yet' }}
+        </div>
         <fieldset>
             <legend>Assessment of Objectives *</legend>
             <p>Please evaluate below your performance on your objectives for the reference period.</p>

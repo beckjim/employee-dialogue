@@ -144,7 +144,14 @@
           <tr id="managed-detail-{{ loop.index }}" class="managed-detail-row" style="display: none;">
             <td colspan="5">
               <div class="entry">
-                <small>{{ row.entry.updated_at|german_time }}</small>
+                <div class="summary">
+                  <div><strong>Employee:</strong> {{ row.entry.name }}</div>
+                  <div><strong>Email:</strong> {{ row.entry.email or 'N/A' }}</div>
+                  <div><strong>Manager:</strong> {{ row.entry.manager_name or 'N/A' }}</div>
+                  <div><strong>Program Manager:</strong> {{ row.entry.program_manager_name or 'N/A' }}</div>
+                  <div><strong>Status:</strong> {{ row.status_label }}</div>
+                  <div><strong>Last updated:</strong> {{ row.timestamp_label }}</div>
+                </div>
                 <div class="summary">
                   <div>
                     <div><strong>Objective rating:</strong> {{ row.entry.objective_rating }}</div>
@@ -176,6 +183,15 @@
                   </div>
                   <div><strong>Feedback received:</strong> {{ row.entry.feedback_received or 'N/A' }}</div>
                   <div><strong>General comments:</strong><br><span class="preserve-lines">{{ row.entry.general_comments }}</span></div>
+                </div>
+                <h4>Manager Assessment</h4>
+                <div class="summary">
+                  <div><strong>Objective comments from manager:</strong><br><span class="preserve-lines">{{ row.entry.manager_objective_comment }}</span></div>
+                  <div><strong>Abilities comments from manager:</strong><br><span class="preserve-lines">{{ row.entry.manager_abilities_comment }}</span></div>
+                  <div><strong>Efficiency comments from manager:</strong><br><span class="preserve-lines">{{ row.entry.manager_efficiency_comment }}</span></div>
+                  <div><strong>Conduct comments from manager:</strong><br><span class="preserve-lines">{{ row.entry.manager_conduct_comment }}</span></div>
+                  <div><strong>General comments from manager:</strong><br><span class="preserve-lines">{{ row.entry.manager_general_comments }}</span></div>
+                  <div><strong>Goals/objectives for 2026:</strong><br><span class="preserve-lines">{{ row.entry.goals_2026 }}</span></div>
                 </div>
               </div>
             </td>
