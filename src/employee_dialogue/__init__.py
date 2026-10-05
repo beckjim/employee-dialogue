@@ -33,8 +33,8 @@ from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from sqlalchemy import inspect
-from werkzeug.wrappers.response import Response
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.wrappers.response import Response
 
 load_dotenv()
 
