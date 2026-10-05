@@ -369,7 +369,7 @@ For questions about:
 ---
 
 **Documentation Status:** ✅ Complete and Ready  
-**Version:** 0.1.0  
+**Version:** 0.1.1
 **Last Updated:** February 2026  
 **Build System:** mkdocs with Material theme  
 **Pages Created:** 16  

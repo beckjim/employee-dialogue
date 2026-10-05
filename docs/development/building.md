@@ -87,7 +87,7 @@ pip install ".[dev]"
 ```toml
 [project]
 name = "employee-dialogue"
-version = "0.1.0"
+version = "0.1.1"
 description = "Performance review application"
 
 [project.optional-dependencies]

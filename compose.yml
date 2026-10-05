@@ -25,8 +25,8 @@ services:
     build:
       context: .
       args:
-        APP_VERSION: ${APP_VERSION:-0.1.0}
-    image: ghcr.io/beckjim/employee-dialogue:${APP_VERSION:-0.1.0}
+        APP_VERSION: ${APP_VERSION:-0.1.1}
+    image: ghcr.io/beckjim/employee-dialogue:${APP_VERSION:-0.1.1}
     volumes:
       - ./instance:/app/instance
     expose:
@@ -40,7 +40,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - ALLOW_FINALIZED_DELETE_TESTING=${ALLOW_FINALIZED_DELETE_TESTING:-false}
       - EMAIL_REDIRECT_ADDRESS=${EMAIL_REDIRECT_ADDRESS}
-      - APP_VERSION=${APP_VERSION:-0.1.0}
+      - APP_VERSION=${APP_VERSION:-0.1.1}
       - HOME=/tmp
       - TMPDIR=/tmp
     restart: unless-stopped

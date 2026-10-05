@@ -1,7 +1,7 @@
 # Stage 1: Builder
 FROM dhi.io/python:3.14-alpine-dev AS builder
 
-ARG APP_VERSION=0.1.0
+ARG APP_VERSION=0.1.1
 
 # Install build dependencies
 RUN apk add --no-cache build-base
@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --root-user-action ignore --target /opt/appdeps -
 # Stage 2: Runtime
 FROM dhi.io/python:3.14-alpine
 
-ARG APP_VERSION=0.1.0
+ARG APP_VERSION=0.1.1
 LABEL org.opencontainers.image.title="employee-dialogue"
 LABEL org.opencontainers.image.version="$APP_VERSION"
 

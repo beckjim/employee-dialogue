@@ -16,7 +16,7 @@ uv sync
 
 Create a .env file (or edit the provided one):
 ```
-APP_VERSION=0.1.0
+APP_VERSION=0.1.1
 AZURE_AD_CLIENT_SECRET=your_client_secret_here
 SECRET_KEY=change_me_in_prod
 SMTP_HOST=localhost

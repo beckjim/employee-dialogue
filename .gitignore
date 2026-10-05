@@ -47,3 +47,6 @@ Thumbs.db
 mail.cmd
 mail.sh
 config/credstore.config
+certs/cert.pem
+certs/key.pem
+nginx.conf

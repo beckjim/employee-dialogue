@@ -237,6 +237,6 @@ See [FAQ](docs/faq.md) or create an issue on GitHub.
 
 ---
 
-**Documentation Version:** 0.1.0  
+**Documentation Version:** 0.1.1
 **Last Updated:** February 2026  
 **Build Status:** ✅ Ready to deploy

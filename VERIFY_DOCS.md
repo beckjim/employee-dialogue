@@ -254,4 +254,4 @@ Questions? See [FAQ](docs/faq.md) or [DOCS_SETUP.md](DOCS_SETUP.md)
 
 ---
 
-*Documentation Version 0.1.0 | Created February 2026*
+*Documentation Version 0.1.1 | Created February 2026*

@@ -41,7 +41,7 @@ load_dotenv()
 try:
     PACKAGE_VERSION = version("employee-dialogue")
 except PackageNotFoundError:
-    PACKAGE_VERSION = "0.1.0"
+    PACKAGE_VERSION = "0.1.1"
 
 APP_VERSION = os.environ.get("APP_VERSION", PACKAGE_VERSION)
 

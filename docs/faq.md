@@ -356,4 +356,4 @@ Can't find the answer?
 ---
 
 **Last updated:** February 2026
-**Documentation version:** 0.1.0
+**Documentation version:** 0.1.1
