@@ -21,6 +21,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Test Application
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
 
     steps:
       - name: Checkout code
@@ -30,6 +32,25 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.14"
+
+      - name: Read application version
+        id: version
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          with Path("pyproject.toml").open("rb") as project_file:
+              app_version = tomllib.load(project_file)["project"]["version"]
+          if not isinstance(app_version, str) or not re.fullmatch(
+              r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}", app_version
+          ):
+              raise ValueError(f"Application version is not a valid Docker tag: {app_version!r}")
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"app_version={app_version}\n")
+          PY
 
       - name: Install uv
         run: pip install uv
@@ -110,16 +131,20 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.test.outputs.app_version }},priority=1000
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.test.outputs.app_version }}
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.version=${{ needs.test.outputs.app_version }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
+          build-args: |
+            APP_VERSION=${{ needs.test.outputs.app_version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

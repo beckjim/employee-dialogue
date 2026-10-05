@@ -43,6 +43,13 @@ Compose builds and tags the app image as:
 
 `ghcr.io/beckjim/employee-dialogue:${APP_VERSION}`
 
+The Build, Test, and Publish workflow reads `project.version` from `pyproject.toml`
+and uses it as `APP_VERSION` for the Docker build, image version label, and image
+tag (for example, `ghcr.io/beckjim/employee-dialogue:0.1.1`). It also publishes
+major/minor, branch, and commit SHA aliases, plus `latest` on the default branch.
+Update `project.version` before publishing a new application version; Git tag
+names do not override the application version.
+
 Container startup performs a one-time app import to initialize/migrate SQLite schema before Gunicorn workers are spawned.
 After that, `SKIP_DB_INIT=1` is set for worker processes to prevent concurrent schema initialization races.
 
