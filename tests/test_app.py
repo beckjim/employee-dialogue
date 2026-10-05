@@ -20,21 +20,6 @@ from employee_dialogue import database
 
 
 @pytest.fixture
-def client():
-    """Create a test client for the app."""
-    app.config["TESTING"] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    app.config["SECRET_KEY"] = "test-secret-key"
-
-    with app.test_client() as client:
-        with app.app_context():
-            database.create_all()
-        yield client
-        with app.app_context():
-            database.drop_all()
-
-
-@pytest.fixture
 def authenticated_session(client):
     """Create an authenticated session."""
     with client.session_transaction() as sess:

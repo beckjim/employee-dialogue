@@ -120,30 +120,19 @@ uv run pytest tests/ -v
 
 ### Writing Tests
 
+Reuse the `client` fixture from `tests/conftest.py`. It configures a temporary
+database before application import and guards table creation and cleanup.
+Do not try to switch databases by changing `SQLALCHEMY_DATABASE_URI` after
+importing the app; that leaves the original SQLAlchemy engine in use.
+
 ```python
-import pytest
-from employee_dialogue import app, database, Entry
-
-@pytest.fixture
-def client():
-    """Create test client."""
-    app.config["TESTING"] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    
-    with app.app_client() as client:
-        with app.app_context():
-            database.create_all()
-        yield client
-        with app.app_context():
-            database.drop_all()
-
 class TestFeature:
     """Test suite for a feature."""
     
     def test_something(self, client):
         """Test description."""
         response = client.get("/")
-        assert response.status_code == 200
+        assert response.status_code == 302
 ```
 
 ### Test Coverage Target

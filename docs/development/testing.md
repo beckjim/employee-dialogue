@@ -137,20 +137,13 @@ def test_invalid_objective_rating(self, authenticated_client):
 
 ### Test Fixtures
 
-```python
-@pytest.fixture
-def client():
-    """Create test client."""
-    app.config["TESTING"] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    
-    with app.test_client() as client:
-        with app.app_context():
-            database.create_all()
-        yield client
-        with app.app_context():
-            database.drop_all()
+The shared `client` fixture in `tests/conftest.py` uses a temporary SQLite
+database configured before the app is imported, with a guard before creating or
+dropping tables. Reuse it rather than defining another database fixture.
+Changing `SQLALCHEMY_DATABASE_URI` after importing the app does not change the
+already initialized SQLAlchemy engine.
 
+```python
 @pytest.fixture
 def authenticated_session(client):
     """Create authenticated session."""

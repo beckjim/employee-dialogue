@@ -54,11 +54,21 @@ The test suite covers:
 
 ## Test Database
 
-Tests use an in-memory SQLite database (`sqlite:///:memory:`) that is created fresh for each test run and cleaned up automatically. This ensures tests are isolated and don't affect the development database.
+Before test collection imports the application, `tests/conftest.py` sets
+`FLASK_INSTANCE_PATH` to a temporary directory and disables startup migrations.
+SQLAlchemy therefore initializes against a temporary SQLite database, never
+the development database. The shared `client` fixture creates and drops tables
+for each test only after verifying the engine points to that temporary database.
+Connections are disposed and the temporary directory is removed at the end of
+the run.
+
+Reuse the shared `client` fixture for new tests. Do not change
+`SQLALCHEMY_DATABASE_URI` after importing the application: SQLAlchemy has already
+initialized its engine, so changing the configuration does not switch databases.
 
 ## Fixtures
 
-- `client`: Flask test client with in-memory database
+- `client`: Flask test client with a guarded temporary SQLite database
 - `authenticated_session`: Test client with authenticated user session
 
 ## Continuous Integration
